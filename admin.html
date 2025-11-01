@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ICC25 • Pledge Admin</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+  <style>
+    body{margin:0;background:#0a111d;color:#eaf2fd;font:14px Inter,system-ui,sans-serif}
+    a{color:inherit}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .card{background:#0f1a2c;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px}
+    input,select,button{background:#0c1525;border:1px solid rgba(255,255,255,0.08);color:#eaf2fd;border-radius:10px;padding:10px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-bottom:1px solid rgba(255,255,255,0.08);padding:8px;text-align:left}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:#111827;color:#dbeafe;cursor:pointer}
+    .muted{color:#9fb3c8}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="head">
+      <div class="brand">
+        <a href="https://brochure.netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/icc-256.png" width="40"/></a>
+        <div>
+          <div style="font-weight:800">ICC25 • Pledge Admin</div>
+          <div class="muted">Digital Pledge Registry — Search • Import • Export • Live Sync</div>
+        </div>
+      </div>
+      <a href="https://netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/netzero-white.png" height="28"/></a>
+    </div>
+
+    <div class="row" style="margin-bottom:12px">
+      <input id="q" placeholder="Search by name, city, pledge..."/>
+      <select id="cat">
+        <option value="">All Categories</option>
+        <option>Energy</option><option>Mobility</option><option>Waste & Circularity</option>
+        <option>Water</option><option>Ecology & Planting</option><option>Lifestyle</option>
+      </select>
+      <button class="btn" onclick="exportCSV()">Export CSV</button>
+      <input id="file" type="file" accept=".xlsx,.csv" />
+      <button class="btn" onclick="importFile()">Upload Excel/CSV</button>
+      <input id="wsUrl" value="ws://localhost:8080" style="width:210px"/>
+      <button class="btn" onclick="connectWS()">Connect Live (WS)</button>
+      <button class="btn" onclick="clearAll()">Clear Local (Dev)</button>
+    </div>
+
+    <div class="card">
+      <table id="t">
+        <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>City</th><th>State</th><th>Nationality</th><th>Categories</th><th>Pledge</th><th>Level</th><th>Created</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+<script>
+const key='icc25_pledges_v5';
+const $=(s,r=document)=>r.querySelector(s);
+function all(){ return JSON.parse(localStorage.getItem(key)||'[]'); }
+function save(list){ localStorage.setItem(key, JSON.stringify(list)); }
+function render(){
+  const q=$('#q').value.toLowerCase(); const cat=$('#cat').value;
+  const rows=all().filter(p=>{
+    const hitCat=!cat|| (p.categories||[]).includes(cat);
+    const hitQ=!q || [p.name,p.city,p.state,p.nationality,p.pledge].some(v=> (v||'').toLowerCase().includes(q));
+    return hitCat && hitQ;
+  });
+  const tb=$('#t tbody'); tb.innerHTML='';
+  rows.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${p.id.slice(0,8)}</td><td>${p.name||''}</td><td>${p.designation||''}</td><td>${p.city||''}</td><td>${p.state||''}</td>
+    <td>${p.nationality||''}</td><td>${(p.categories||[]).join(' | ')}</td><td>${(p.pledge||'').slice(0,120)}</td><td>${p.intensity||''}</td><td>${(p.created_at||'').replace('T',' ').slice(0,16)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function toCSV(rows){
+  if(!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  const esc = (v)=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv = [headers.map(esc).join(",")].concat(
+    rows.map(r=>headers.map(h=>esc(r[h])).join(","))
+  ).join("\n");
+  return csv;
+}
+function exportCSV(){
+  const rows=all().map(p=>({id:p.id,name:p.name,email:p.email,phone:p.phone,designation:p.designation,org:p.org,city:p.city,state:p.state,nationality:p.nationality,categories:(p.categories||[]).join('|'),pledge:p.pledge,intensity:p.intensity,created_at:p.created_at}));
+  const csv=toCSV(rows); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pledges.csv'; a.click();
+}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(Boolean);
+  const headers=lines.shift().split(",").map(h=>h.replace(/^"|"$/g,''));
+  return lines.map(line=>{
+    const cols=line.match(/("([^"]|"")*"|[^,]+)/g)||[];
+    const obj={}; headers.forEach((h,i)=>{ obj[h]= (cols[i]||'').replace(/^"|"$/g,'').replace(/""/g,'"'); });
+    if(obj.categories) obj.categories = String(obj.categories).split('|').map(s=>s.trim()).filter(Boolean);
+    return obj;
+  });
+}
+function importFile(){
+  const f=$('#file').files[0]; if(!f){ alert('Choose a file'); return; }
+  const ext = f.name.split('.').pop().toLowerCase(); const reader = new FileReader();
+  if(ext==='csv'){
+    reader.onload=()=>{ const list=parseCSV(reader.result); merge(list); }; reader.readAsText(f);
+  }else if(ext==='xlsx'){
+    if(!window.XLSX){ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload=()=>readXLSX(f); document.head.appendChild(s); }
+    else readXLSX(f);
+  }else{ alert('Unsupported file type. Use .xlsx or .csv'); }
+}
+function readXLSX(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:'array'}); const ws = wb.Sheets[wb.SheetNames[0]]; const json = XLSX.utils.sheet_to_json(ws);
+    json.forEach(r=>{ if(r.categories) r.categories = String(r.categories).split('|').map(s=>s.trim()).filter(Boolean); });
+    merge(json);
+  };
+  reader.readAsArrayBuffer(file);
+}
+function merge(list){
+  list = list.map(p=>({ id: p.id || crypto.randomUUID(), name:p.name||'', email:p.email||'', phone:p.phone||'', org:p.org||'', designation:p.designation||'', city:p.city||'', state:p.state||'', nationality:p.nationality||'', categories: p.categories||[], pledge:p.pledge||'', intensity:p.intensity||'', consent: true, created_at: p.created_at || new Date().toISOString() }));
+  const map = Object.fromEntries(all().map(x=>[x.id,x])); list.forEach(p=>{ map[p.id]=p; }); save(Object.values(map)); render();
+}
+function clearAll(){ if(confirm('Clear local pledges?')) localStorage.removeItem(key), render(); }
+let ws=null;
+function connectWS(){
+  if(ws && ws.readyState===1) return;
+  const url = ($('#wsUrl').value || 'ws://localhost:8080');
+  ws = new WebSocket(url);
+  ws.onopen=()=>{ alert('WS connected'); };
+  ws.onmessage=(evt)=>{ try{ const m=JSON.parse(evt.data); if(m.type==='pledge'&&m.data){ const rows=all(); rows.push(m.data); save(rows); render(); } }catch(e){} };
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.title='ICC25 • Pledge Admin';
+  $('#q').addEventListener('input', render); $('#cat').addEventListener('change', render); render();
+});
+</script>
+</body>
+</html>

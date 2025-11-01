@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ICC25 • Certificate</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="certificate" style="display:block">
+      <div class="crest"></div>
+      <div class="cer-head">
+        <a href="https://brochure.netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/icc-256.png" alt="ICC" width="44"/></a>
+        <div style="text-align:center">
+          <div class="cer-title">Certificate of Climate Commitment</div>
+          <div class="cer-sub">India Climate Conclave 2025 • Digital Pledge Registry</div>
+        </div>
+        <a href="https://netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/netzero-white.png" alt="NetZero" height="30"/></a>
+      </div>
+      <div class="cer-body">
+        <div class="cer-panel">
+          <div class="cer-name" id="c-name">Participant</div>
+          <div class="cer-meta" id="c-meta">City, State • Country</div>
+          <div style="margin:10px 0; color:var(--gold); font-weight:800; letter-spacing:.2px">PLEDGE</div>
+          <div class="cer-pledge" id="c-pledge"></div>
+          <div class="sigrow">
+            <div class="line">Participant Signature</div>
+            <div class="line">ICC Coordination</div>
+          </div>
+          <div class="cer-meta" style="margin-top:6px">Issued: <span id="c-date"></span> • ID: <span id="c-id"></span></div>
+        </div>
+        <div class="cer-panel" style="text-align:center">
+          <canvas id="qrCanvas" width="200" height="200" style="background:#fff;border-radius:8px"></canvas>
+          <div class="cer-meta" style="margin-top:8px">Scan to verify (this page)</div>
+          <button class="btn-secondary" onclick="window.print()" style="margin-top:10px">Print Certificate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+const Store={ key:'icc25_pledges_v5', all(){ return JSON.parse(localStorage.getItem(this.key)||'[]'); }, get(id){ return this.all().find(x=>x.id===id); } };
+const params=new URLSearchParams(location.search); const id=params.get('id');
+function TinyQR(canvas, text){ var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js'; s.onload=function(){ new QRious({ element: canvas, value: text, size: 200, level:'L' }); }; document.head.appendChild(s); }
+function render(){
+  const p = Store.get(id);
+  if(!p){ document.getElementById('c-name').textContent='(Pledge not found)'; return; }
+  document.getElementById('c-name').textContent=p.name||'Participant';
+  document.getElementById('c-meta').textContent=`${p.city||''}${p.state?', '+p.state:''}${p.nationality?' • '+p.nationality:''}`;
+  document.getElementById('c-pledge').textContent=p.pledge||'';
+  document.getElementById('c-date').textContent=(p.created_at||'').replace('T',' ').slice(0,16);
+  document.getElementById('c-id').textContent=p.id;
+  TinyQR(document.getElementById('qrCanvas'), location.href);
+}
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>

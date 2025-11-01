@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ICC25 • Digital Pledge Portal</title>
+  <meta name="color-scheme" content="dark light"/>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="256x256" href="assets/icc-256.png"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <a class="logo" href="https://brochure.netzerohorizon.com/" target="_blank" rel="noopener">
+        <img src="assets/icc-256.png" alt="ICC" width="40" height="40"/>
+        <div class="brand">
+          <div class="badge">India Climate Conclave 2025 • 19 Dec • NDMC, New Delhi</div>
+          <h2>Digital Pledge — Dialogue → Data → Dharma</h2>
+        </div>
+      </a>
+      <a class="logo" href="https://netzerohorizon.com/" target="_blank" rel="noopener">
+        <img src="assets/netzero-white.png" alt="NetZero Horizon" height="36"/>
+      </a>
+    </header>
+
+    <section class="hero">
+      <div class="card">
+        <h1>Join the Climate Action Registry</h1>
+        <small class="muted">Your promise becomes a signal on the live wall — inspiring others to act.</small>
+        <form id="pledge-form" class="grid grid-2" style="margin-top:12px">
+          <div><label for="name">Full Name *</label><input id="name" name="name" placeholder="e.g., Ashish Sharma" required/></div>
+          <div><label for="email">Email</label><input id="email" name="email" type="email" placeholder="name@example.com"/></div>
+          <div><label for="phone">Phone</label><input id="phone" name="phone" placeholder="+91-XXXXXXXXXX"/></div>
+          <div><label for="org">Organization</label><input id="org" name="org" placeholder="Company / Institute"/></div>
+          <div><label for="designation">Designation</label><input id="designation" name="designation" placeholder="e.g., Program Manager"/></div>
+          <div><label for="city">City</label><input id="city" name="city" placeholder="City"/></div>
+          <div><label for="state">State/Region</label><input id="state" name="state" placeholder="State or Region"/></div>
+          <div><label for="nationality">Nationality (Country)</label><input id="nationality" name="nationality" placeholder="e.g., India / IN"/></div>
+
+          <div class="grid" style="grid-column:1/-1">
+            <label>Choose Pledge Categories (select multiple)</label>
+            <div class="cats">
+              <label><input type="checkbox" name="categories" value="Energy"/> Energy</label>
+              <label><input type="checkbox" name="categories" value="Mobility"/> Mobility</label>
+              <label><input type="checkbox" name="categories" value="Waste & Circularity"/> Waste & Circularity</label>
+              <label><input type="checkbox" name="categories" value="Water"/> Water</label>
+              <label><input type="checkbox" name="categories" value="Ecology & Planting"/> Ecology & Planting</label>
+              <label><input type="checkbox" name="categories" value="Lifestyle"/> Lifestyle</label>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-column:1/-1">
+            <label for="pledge">Describe your pledge *</label>
+            <textarea id="pledge" name="pledge" rows="3" placeholder="I will switch my office to LED lighting and install a 3kW rooftop solar within 90 days." required></textarea>
+          </div>
+
+          <div>
+            <label for="intensity">Commitment Level</label>
+            <input id="intensity" name="intensity" type="range" min="1" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value"/>
+            <small>Level: <span>3</span>/5</small>
+          </div>
+
+          <div class="switch" style="grid-column:1/-1">
+            <input id="consent" name="consent" type="checkbox" required/>
+            <label for="consent">I consent to display my first name and pledge on the live wall *</label>
+          </div>
+
+          <div class="row" style="grid-column:1/-1;justify-content:flex-end">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('pledge-form').reset()">Reset</button>
+            <button type="submit" class="btn-primary">Submit Pledge</button>
+          </div>
+        </form>
+
+        <!-- Certificate preview (print-friendly single page) -->
+        <div id="certificate" class="certificate" style="display:none">
+          <div class="crest"></div>
+          <div class="cer-head">
+            <a href="https://brochure.netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/icc-256.png" alt="ICC" width="44"/></a>
+            <div style="text-align:center">
+              <div class="cer-title">Certificate of Climate Commitment</div>
+              <div class="cer-sub">India Climate Conclave 2025 • Digital Pledge Registry</div>
+            </div>
+            <a href="https://netzerohorizon.com/" target="_blank" rel="noopener"><img src="assets/netzero-white.png" alt="NetZero" height="30"/></a>
+          </div>
+          <div class="cer-body">
+            <div class="cer-panel">
+              <div class="cer-name" id="c-name">Participant</div>
+              <div class="cer-meta" id="c-meta">City, State • Country</div>
+              <div style="margin:10px 0; color:var(--gold); font-weight:800; letter-spacing:.2px">PLEDGE</div>
+              <div class="cer-pledge" id="c-pledge"></div>
+              <div class="sigrow">
+                <div class="line">Participant Signature</div>
+                <div class="line">ICC Coordination</div>
+              </div>
+              <div class="cer-meta" style="margin-top:6px">Issued: <span id="c-date">2025-11-01 05:59</span> • Verify: <a id="c-link" target="_blank" rel="noopener">Certificate URL</a></div>
+            </div>
+            <div class="cer-panel" style="text-align:center">
+              <canvas id="qrCanvas" width="200" height="200" style="background:#fff;border-radius:8px"></canvas>
+              <div class="cer-meta" style="margin-top:8px">Scan to view this certificate</div>
+              <button class="btn-secondary" onclick="window.print()" style="margin-top:10px">Print Certificate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin-bottom:8px">Live Pledge Wall</h2>
+          <div class="tools">
+            <span class="cer-sub" id="wsLabel" style="margin-right:6px;opacity:.7">ws://localhost:8080</span>
+            <input id="wsUrl" value="ws://localhost:8080" style="width:210px;background:#0b1220;border:1px solid var(--border);color:#9fb3c8;padding:8px 10px;border-radius:10px" />
+            <button id="wsBtn" class="toggle" title="Connect WebSocket">Connect Live (WS)</button>
+          </div>
+        </div>
+        <small class="muted">Dots drift, connect, and color by category. Hover to read pledges. Connect multiple devices with **WS**.</small>
+        <div class="legend">
+          <span><i style="background:#ffb703"></i>Energy</span>
+          <span><i style="background:#3b82f6"></i>Mobility</span>
+          <span><i style="background:#a855f7"></i>Waste</span>
+          <span><i style="background:#06b6d4"></i>Water</span>
+          <span><i style="background:#22c55e"></i>Ecology</span>
+          <span><i style="background:#f97316"></i>Lifestyle</span>
+        </div>
+        <div class="visual" style="margin-top:10px"></div>
+
+        <div class="kpis">
+          <div class="kpi kpi-total"><div class="big">0</div><small class="muted">Total Pledges</small></div>
+          <div class="kpi kpi-today"><div class="big">0</div><small class="muted">Today</small></div>
+          <div class="kpi kpi-topcat"><div class="big">—</div><small class="muted">Top Categories</small></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">© 2025 NetZero Horizon • India Climate Conclave 2025 • Digital Pledge Portal</footer>
+  </div>
+  <script>
+(function(global){
+  function TinyQR(canvas, text, cb){
+    if (global.QRious){
+      new global.QRious({ element: canvas, value: text, size: 200, level:'L' });
+      cb && cb();
+      return;
+    }
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js';
+    s.onload=function(){ new global.QRious({ element: canvas, value: text, size: 200, level:'L' }); cb && cb(); };
+    document.head.appendChild(s);
+  }
+  global.TinyQR = TinyQR;
+})(window);
+</script>
+  <script src="script.js"></script>
+</body>
+</html>
